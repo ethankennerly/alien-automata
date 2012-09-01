@@ -39,7 +39,7 @@ package uk.co.stdio {
         
         public static var aliveColour:uint = 0xFFFF0000;
         public static const DEAD_COLOUR:uint = 0x00000000;
-        public static const DISPLAY_SCALE:Number = 2;
+        public static var displayScale:Number = 2;
         // Bitmap that is shown in the display list.
         public var displayContainer:Bitmap;
         // Bitmap that is used to hold the state of the pixels.
@@ -55,15 +55,15 @@ package uk.co.stdio {
         private var point:Point = new Point();
         private var rect:Rectangle = new Rectangle();
  
-        public function SimpleConway(stage:Stage, state:BitmapData, DISPLAY_SCALE:int,
+        public function SimpleConway(stage:Stage, state:BitmapData, displayScale:int,
                 onClickCallback:Function) {
             this.state = state;
             rect.width = state.width;
             rect.height = state.height;
             
             displayContainer = new Bitmap(state);
-            displayContainer.scaleX = DISPLAY_SCALE;
-            displayContainer.scaleY = DISPLAY_SCALE;
+            displayContainer.scaleX = displayScale;
+            displayContainer.scaleY = displayScale;
             addChild(displayContainer);
             addChild(new FPSMonitor());
             
