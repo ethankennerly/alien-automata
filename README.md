@@ -19,6 +19,12 @@ o To fire, press Space, Z, X, or C.
 
 https://github.com/ethankennerly/alien-automata
 
+* Third Party libraries
+
+In sub-folders,
+this includes frame per second monitor and convolution filter to iterate Life.
+Contact those authors for their licenses.
+
 Comments
 --------
 
