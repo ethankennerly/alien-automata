@@ -1,0 +1,60 @@
+<languageVersion : 1.0;>
+
+kernel GameOfLife
+<
+	namespace : "sk.yoz";
+	vendor : "Yoz";
+	version : 1;
+	description : "Game of life engine   http://blog.yoz.sk/examples/gameOfLife/gameoflife.pbk";
+>
+{
+	input image4 src;
+	output pixel4 dst;
+
+	parameter float width
+	<
+		minValue: float(0.0);
+		maxValue: float(4096.0);
+		defaultValue: float(100.0);
+	>;
+
+	parameter float height
+	<
+		minValue: float(0.0);
+		maxValue: float(4096.0);
+		defaultValue: float(100.0);
+	>;
+	
+	void evaluatePixel()
+	{
+		float2 pos = outCoord();
+		float maxX = min(1.0, width - pos.x - 0.5);
+		float maxY = min(1.0, height - pos.y - 0.5);
+		float a = sampleNearest(src, pos).r;
+		float n = (sampleNearest(src, pos + float2(-1.0, -1.0))
+				+ sampleNearest(src, pos + float2(-1.0, 0.0))
+				+ sampleNearest(src, pos + float2(0.0, - 1.0))
+				+ sampleNearest(src, pos + float2(1.0, -1.0)) * maxX
+				+ sampleNearest(src, pos + float2(1.0, 0.0)) * maxX
+				+ sampleNearest(src, pos + float2(-1.0, 1.0)) * maxY
+				+ sampleNearest(src, pos + float2(0.0, 1.0)) * maxY
+				+ sampleNearest(src, pos + float2(1.0, 1.0)) * maxX * maxY).r;
+		
+		/*
+		// original engine
+		if(a == 1.0)
+			dst = float4((n == 2.0 || n == 3.0) ? 1.0 : 0.0);
+		else
+			dst = float4(n == 3.0 ? 1.0 : 0.0);
+		*/
+		
+		// faster
+		if(n == 3.0)
+			dst = float4(1.0);
+		else if(n == 2.0)
+			dst = float4(a);
+		else
+			dst = float4(0.0);
+	}
+}
+

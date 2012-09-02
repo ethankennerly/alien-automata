@@ -19,7 +19,7 @@ package
     public class AlienAutomata extends Sprite
     {
         public static var universe:BitmapData;
-        [Embed (source="PlayerBullet.png")]
+        [Embed (source="PlayerBulletWide.png")]
         public static var PlayerBullet:Class;
         public static var playerBullet:Bitmap = new PlayerBullet();
         [Embed (source="Player.png")]
