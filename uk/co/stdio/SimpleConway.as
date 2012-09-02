@@ -29,17 +29,14 @@ package uk.co.stdio {
     import flash.display.Sprite;
     import flash.display.Stage;
     import flash.events.Event;
-    import flash.events.MouseEvent;
     import flash.filters.ConvolutionFilter;
     import flash.geom.Point;
     import flash.geom.Rectangle;
-    import it.flashfuck.debugger.FPSMonitor;
     
     public class SimpleConway extends Sprite {
         
         public static var aliveColour:uint = 0xFFFF0000;
         public static const DEAD_COLOUR:uint = 0x00000000;
-        public static var displayScale:Number = 2;
         // Bitmap that is shown in the display list.
         public var displayContainer:Bitmap;
         // Bitmap that is used to hold the state of the pixels.
@@ -55,17 +52,13 @@ package uk.co.stdio {
         private var point:Point = new Point();
         private var rect:Rectangle = new Rectangle();
  
-        public function SimpleConway(stage:Stage, state:BitmapData, displayScale:int,
-                onClickCallback:Function) {
+        public function SimpleConway(state:BitmapData) {
             this.state = state;
             rect.width = state.width;
             rect.height = state.height;
             
             displayContainer = new Bitmap(state);
-            displayContainer.scaleX = displayScale;
-            displayContainer.scaleY = displayScale;
             addChild(displayContainer);
-            addChild(new FPSMonitor());
             
             /* Convolution filter which counts the number of alive neighbours a pixel has. Note the value of 0.5 applied to the source pixel. This allows the filter to carry the state of the state of the source pixel through so the stasis rule can be applied. */
             countNeighbours = new ConvolutionFilter(3, 3, [1, 1, 1, 1, 0.5, 1, 1, 1, 1], 8, 0, false);
@@ -80,32 +73,13 @@ package uk.co.stdio {
             applyConwayRules[0x6E] = aliveColour;
             // source pixel is dead and has 3 alive neighbours (creation)
             applyConwayRules[0x5E] = aliveColour;
-            
-            stage.addEventListener(MouseEvent.CLICK, onClickCallback);
-            stage.addEventListener(Event.ENTER_FRAME, onEnterFrame);
         }
     
-        private function onClick(e:MouseEvent):void {
-            // Draw the "acorn" shape at the mouse position. When scaled,
-            // displayContainer can return sub-pixel mouse positions so
-            // the value is rounded.
-            var x:int = Math.round(displayContainer.mouseX);
-            var y:int = Math.round(displayContainer.mouseY);
-            state.lock();
-            state.setPixel32(x, y, aliveColour);
-            state.setPixel32(x-2, y-1, aliveColour);
-            state.setPixel32(x-3, y+1, aliveColour);
-            state.setPixel32(x-2, y+1, aliveColour);
-            state.setPixel32(x+1, y+1, aliveColour);
-            state.setPixel32(x+2, y+1, aliveColour);
-            state.setPixel32(x+3, y+1, aliveColour);
-            state.unlock();
-        }
-        
-        private function onEnterFrame(e:Event):void {
+        public function update():void {
             state.lock();
             state.applyFilter(state, rect, point, countNeighbours);
-            state.paletteMap(state, rect, point, applyConwayRules, applyConwayRules, applyConwayRules, applyConwayRules);
+            state.paletteMap(state, rect, point, 
+                applyConwayRules, applyConwayRules, applyConwayRules, applyConwayRules);
             state.unlock();
         }
     }
