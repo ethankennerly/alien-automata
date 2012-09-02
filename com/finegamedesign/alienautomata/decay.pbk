@@ -1,0 +1,79 @@
+<languageVersion : 1.0;>
+
+kernel Decay
+<
+	namespace : "sk.yoz";
+	vendor : "Yoz";
+	version : 1;
+	description : "After 32 turns of continuous life, decay.  Adapted from Game of life engine.  http://blog.yoz.sk/examples/gameOfLife/gameoflife.pbk";
+>
+{
+	input image4 src;
+	output pixel4 dst;
+    const float minA = 0.5;
+    const float decay = (1.0 - minA) / 32.0;
+    const float recentDecay = minA - (4.0 * decay);
+    const float maxDecay = minA + (4.0 * decay);
+
+	parameter float width
+	<
+		minValue: float(0.0);
+		maxValue: float(4096.0);
+		defaultValue: float(100.0);
+	>;
+
+	parameter float height
+	<
+		minValue: float(0.0);
+		maxValue: float(4096.0);
+		defaultValue: float(100.0);
+	>;
+	
+    #define SAMPLE_THRESHOLD(src,pos,minA,dx,dy) ((minA <= (sampleNearest(src, pos + float2(dx, dy))).a) ? 1.0 : 0.0)
+
+	void evaluatePixel()
+	{
+		float2 pos = outCoord();
+		float maxX = width <= pos.x + 0.5 ? 0.0 : 1.0;
+		float maxY = height <= pos.y + 0.5 ? 0.0 : 1.0;
+		float4 p = sampleNearest(src, pos);
+		float n = 
+                SAMPLE_THRESHOLD(src, pos, minA, -1.0, -1.0) 
+				+ SAMPLE_THRESHOLD(src, pos, minA, -1.0, 0.0)
+				+ SAMPLE_THRESHOLD(src, pos, minA, 0.0, - 1.0)
+				+ SAMPLE_THRESHOLD(src, pos, minA, 1.0, -1.0) * maxX
+				+ SAMPLE_THRESHOLD(src, pos, minA, 1.0, 0.0) * maxX
+				+ SAMPLE_THRESHOLD(src, pos, minA, -1.0, 1.0) * maxY
+				+ SAMPLE_THRESHOLD(src, pos, minA, 0.0, 1.0) * maxY
+				+ SAMPLE_THRESHOLD(src, pos, minA, 1.0, 1.0) * maxX * maxY
+                ;
+		
+		if(n == 3.0) {
+            if (
+                // p.a <= minA
+                p.a <= recentDecay
+            ) {
+                dst = float4(1.0);
+            }
+            else if (minA <= p.a) {
+                dst = float4(1.0);
+                dst.a = max(p.a - decay, 0.0);
+            } else {
+                dst = float4(0.0);
+            }
+        }
+		else if(n == 2.0) {
+			dst = float4(p[0], p[1], p[2], p[3]);
+            if (minA <= p.a) {
+                dst.a = max(p.a - decay, 0.0);
+            }
+        }
+		else {
+			dst = float4(0.0);
+            if (minA <= p.a && p.a < maxDecay) {
+                dst.a = max(minA - decay, 0.0);
+            }
+        }
+	}
+}
+

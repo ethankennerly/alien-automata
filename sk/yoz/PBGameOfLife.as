@@ -3,7 +3,7 @@ download .pbk and read more on:
 http://blog.yoz.sk/2010/03/game-of-life/
 */
 
-package
+package sk.yoz
 {
     import flash.display.Bitmap;
     import flash.display.BitmapData;

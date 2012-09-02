@@ -1,4 +1,4 @@
-package
+package com.finegamedesign.alienautomata
 {
     import flash.display.Bitmap;
     import flash.display.BitmapData;
@@ -12,13 +12,12 @@ package
     import flash.ui.Keyboard;
     import flash.utils.getTimer;
 
-    import uk.co.stdio.SimpleConway;
+    import com.finegamedesign.alienautomata.PBDecay;
     import it.flashfuck.debugger.FPSMonitor;
 
     [SWF(width="640", height="480", frameRate="30", backgroundColor="#000000")]
     public class AlienAutomata extends Sprite
     {
-        public static var universe:BitmapData;
         [Embed (source="PlayerBulletWide.png")]
         public static var PlayerBullet:Class;
         public static var playerBullet:Bitmap = new PlayerBullet();
@@ -36,7 +35,9 @@ package
         public var leftThrust:int;
         public var rightThrust:int;
         public var shooting:Boolean;
-        public var conway:SimpleConway;
+        public var started:Boolean;
+        public var life:PBDecay;
+        public var universe:Sprite;
 
         public function AlienAutomata()
         {
@@ -55,50 +56,62 @@ package
             leftThrust = 0;
             rightThrust = 0;
             shooting = false;
-            universe = new BitmapData(stage.stageWidth / displayScale, 
-                stage.stageHeight / displayScale, 
-                true, 0x00000000);
-            SimpleConway.aliveColour = 0xFFFFFFFF;
-            conway = new SimpleConway(universe);
-            conway.scaleX = displayScale;
-            conway.scaleY = displayScale;
-
-            addChild(conway);
-            player.x = (universe.width - playerBullet.width >> 1);
-            player.y = (universe.height - player.height - 1);
-            conway.addChild(player);
+            started = false;
+            universe = new Sprite();
+            universe.scaleX = displayScale;
+            universe.scaleY = displayScale;
+            life = new PBDecay(stage.stageWidth / displayScale, 
+                stage.stageHeight / displayScale);
+            universe.addChild(life.bitmap);
+            player.x = (life.bitmap.width - playerBullet.width >> 1);
+            player.y = (life.bitmap.height - player.height - 1);
+            universe.addChild(player);
+            addChild(universe);
             stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown, false, 0, true);
             stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp, false, 0, true);
-            stage.addEventListener(MouseEvent.CLICK, addArmada);
-            stage.addEventListener(Event.ENTER_FRAME, update);
+            stage.addEventListener(MouseEvent.CLICK, start, false, 0, true);
+            stage.addEventListener(Event.ENTER_FRAME, update, false, 0, true);
             addChild(new FPSMonitor());
         }
 
-        public function addArmada(event:Event)
+        public function start(event:Event)
         {
-            conway.state.lock();
-            conway.state.copyPixels(enemyArmada.bitmapData, 
-                new Rectangle(0, 0, enemyArmada.width, enemyArmada.height),
-                new Point((universe.width - enemyArmada.width) >> 1, 1),
-                null, null, true );
-            conway.state.unlock();
+            trace("start");
+            addArmada(life.bitmapData);
+            started = true;
         }
 
-        private function update(e:Event):void 
+        public function addArmada(state:BitmapData)
+        {
+            state.lock();
+            state.copyPixels(enemyArmada.bitmapData, 
+                new Rectangle(0, 0, enemyArmada.width, enemyArmada.height),
+                new Point((state.width - enemyArmada.width) >> 1, 1),
+                null, null, true );
+            state.unlock();
+        }
+
+        public function update(e:Event):void 
+        {
+            updatePlayer(life.bitmapData);
+            life.update();
+        }
+
+        private function updatePlayer(state:BitmapData):void 
         {
             player.x = Math.max(1, Math.min(player.x + leftThrust + rightThrust, 
-                                        universe.width - playerBullet.width - 1));
+                                        state.width - playerBullet.width - 1));
             if (shooting) {
                 var now = getTimer();
                 if (shootTime <= now) {
-                    playerShoot(conway.state, playerBullet);
+                    playerShoot(state, playerBullet);
                     shootTime = now + shootInterval;
                 }
             }
-            conway.update();
+            life.update();
         }
 
-        public function onKeyDown(event:KeyboardEvent)
+        private function onKeyDown(event:KeyboardEvent)
         {
             if (Keyboard.SPACE == event.keyCode) {
                 shooting = true;
@@ -111,7 +124,7 @@ package
             }
         }
 
-        public function onKeyUp(event:KeyboardEvent)
+        private function onKeyUp(event:KeyboardEvent)
         {
             if (Keyboard.SPACE == event.keyCode) {
                 shooting = false;
@@ -124,7 +137,7 @@ package
             }
         }
 
-        public function playerShoot(state:BitmapData, playerBullet:Bitmap)
+        private function playerShoot(state:BitmapData, playerBullet:Bitmap)
         {
             state.lock();
             state.copyPixels(playerBullet.bitmapData, 
