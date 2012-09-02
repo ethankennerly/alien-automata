@@ -12,8 +12,8 @@ kernel Decay
 	output pixel4 dst;
     const float minA = 0.5;
     const float decay = (1.0 - minA) / 32.0;
-    const float recentDecay = minA - (4.0 * decay);
-    const float maxDecay = minA + (4.0 * decay);
+    const float recentDecay = minA - (16.0 * decay);
+    const float maxDecay = minA + (16.0 * decay);
 
 	parameter float width
 	<
@@ -30,6 +30,17 @@ kernel Decay
 	>;
 	
     #define SAMPLE_THRESHOLD(src,pos,minA,dx,dy) ((minA <= (sampleNearest(src, pos + float2(dx, dy))).a) ? 1.0 : 0.0)
+
+    #define PERISH(dst) \
+			dst = float4(0.0); \
+            if (minA <= p.a) { \
+                if (p.a < maxDecay) { \
+                    dst.a = max(minA - decay, 0.0); \
+                } \
+            } \
+            else { \
+                dst.a = max(p.a - decay, 0.0); \
+            }
 
 	void evaluatePixel()
 	{
@@ -50,7 +61,6 @@ kernel Decay
 		
 		if(n == 3.0) {
             if (
-                // p.a <= minA
                 p.a <= recentDecay
             ) {
                 dst = float4(1.0);
@@ -59,7 +69,7 @@ kernel Decay
                 dst = float4(1.0);
                 dst.a = max(p.a - decay, 0.0);
             } else {
-                dst = float4(0.0);
+                PERISH(dst);
             }
         }
 		else if(n == 2.0) {
@@ -69,10 +79,7 @@ kernel Decay
             }
         }
 		else {
-			dst = float4(0.0);
-            if (minA <= p.a && p.a < maxDecay) {
-                dst.a = max(minA - decay, 0.0);
-            }
+            PERISH(dst);
         }
 	}
 }
