@@ -38,7 +38,8 @@ kernel GameOfLife
 				+ sampleNearest(src, pos + float2(1.0, 0.0)) * maxX
 				+ sampleNearest(src, pos + float2(-1.0, 1.0)) * maxY
 				+ sampleNearest(src, pos + float2(0.0, 1.0)) * maxY
-				+ sampleNearest(src, pos + float2(1.0, 1.0)) * maxX * maxY).r;
+				+ sampleNearest(src, pos + float2(1.0, 1.0)) * maxX * maxY
+		).r;
 		
 		/*
 		// original engine

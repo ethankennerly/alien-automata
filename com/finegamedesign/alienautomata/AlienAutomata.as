@@ -15,7 +15,7 @@ package com.finegamedesign.alienautomata
     import com.finegamedesign.alienautomata.PBDecay;
     import it.flashfuck.debugger.FPSMonitor;
 
-    [SWF(width="640", height="480", frameRate="30", backgroundColor="#000000")]
+    [SWF(width="483", height="480", frameRate="30", backgroundColor="#000000")]
     public class AlienAutomata extends Sprite
     {
         [Embed (source="PlayerBulletWide.png")]
@@ -51,7 +51,7 @@ package com.finegamedesign.alienautomata
 
         public function init(event:Event) 
         {
-            displayScale = 2;
+            displayScale = 3;
             shootTime = 0;
             leftThrust = 0;
             rightThrust = 0;
@@ -93,11 +93,11 @@ package com.finegamedesign.alienautomata
 
         public function update(e:Event):void 
         {
-            updatePlayer(life.bitmapData);
-            life.update();
+            updateState(life.bitmapData);
+            // updateState(life.bitmapData);
         }
 
-        private function updatePlayer(state:BitmapData):void 
+        private function updateState(state:BitmapData):void 
         {
             player.x = Math.max(1, Math.min(player.x + leftThrust + rightThrust, 
                                         state.width - playerBullet.width - 1));

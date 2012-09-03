@@ -2,10 +2,10 @@
 
 kernel Decay
 <
-	namespace : "sk.yoz";
-	vendor : "Yoz";
+	namespace : "com.finegamedesign";
+	vendor : "Ethan Kennerly";
 	version : 1;
-	description : "After 32 turns of continuous life, decay.  Adapted from Game of life engine.  http://blog.yoz.sk/examples/gameOfLife/gameoflife.pbk";
+	description : "After 32 turns of continuous life, decay.  Forked from Game of life engine.  http://blog.yoz.sk/examples/gameOfLife/gameoflife.pbk";
 >
 {
 	input image4 src;
@@ -14,7 +14,15 @@ kernel Decay
     const float decay = (1.0 - minA) / 32.0;
     const float recentDecay = minA - (16.0 * decay);
     const float maxDecay = minA + (16.0 * decay);
-
+    /*const float4 white = float4(1.0, 1.0, 1.0, 1.0);
+    const float4 yellow = float4(1.0, 1.0, 0.0, 1.0);
+    const float4 magenta = float4(1.0, 0.0, 1.0, 1.0);
+    const float4 red = float4(1.0, 0.0, 0.0, 1.0);
+    const float4 cyan = float4(0.0, 1.0, 1.0, 1.0);
+    const float4 green = float4(0.0, 1.0, 0.0, 1.0);
+    const float4 blue = float4(0.0, 0.0, 1.0, 1.0);
+    */
+    
 	parameter float width
 	<
 		minValue: float(0.0);
@@ -28,8 +36,41 @@ kernel Decay
 		maxValue: float(4096.0);
 		defaultValue: float(100.0);
 	>;
-	
-    #define SAMPLE_THRESHOLD(src,pos,minA,dx,dy) ((minA <= (sampleNearest(src, pos + float2(dx, dy))).a) ? 1.0 : 0.0)
+
+    #define INC_COLOR(c, col) \
+        c++; if (majorColor < c){majorColor = c; color = col;}
+
+    /**
+     * Assign new pixel the major color.
+     */
+    #define COUNT_COLOR(c) \
+        if (0.0 < c.r && 0.0 < c.g && 0.0 < c.b){INC_COLOR(whites, neighbor)} \
+        else if (0.0 < c.r && 0.0 < c.g){INC_COLOR(yellows, neighbor)} \
+        else if (0.0 < c.r && 0.0 < c.b){INC_COLOR(magentas, neighbor)} \
+        else if (0.0 < c.r){INC_COLOR(reds, neighbor)} \
+        else if (0.0 < c.g && 0.0 < c.b){INC_COLOR(cyans, neighbor)} \
+        else if (0.0 < c.g){INC_COLOR(greens, neighbor)} \
+        else if (0.0 < c.b){INC_COLOR(blues, neighbor)}
+        
+    #define SIMPLE_SAMPLE_NEAREST(dx,dy) \
+            n += (minA <= sampleNearest(src, pos + float2(dx, dy)).a) ? 1.0 : 0.0
+            
+    #define _SAMPLE_NEAREST(dx,dy) \
+            neighbor = sampleNearest(src, pos + float2(dx, dy)); \
+            if (minA <= neighbor.a) { \
+                n += 1.0; \
+            }
+
+    #define SAMPLE_NEAREST(dx,dy) \
+        if ((0.0 < dx + pos.x + 0.5 && pos.x + dx + 0.5 < width) \
+         && (0.0 < dy + pos.y + 0.5 && pos.y + dy + 0.5 < height)) { \
+            neighbor = sampleNearest(src, pos + float2(dx, dy)); \
+            if (minA <= neighbor.a) { \
+                n += 1.0; \
+                COUNT_COLOR(neighbor); \
+            } \
+        }
+                
 
     #define PERISH(dst) \
 			dst = float4(0.0); \
@@ -45,35 +86,45 @@ kernel Decay
 	void evaluatePixel()
 	{
 		float2 pos = outCoord();
-		float maxX = width <= pos.x + 0.5 ? 0.0 : 1.0;
-		float maxY = height <= pos.y + 0.5 ? 0.0 : 1.0;
+		bool maxX = pos.x + 0.5 < width;
+		bool maxY = pos.y + 0.5 < height;
 		float4 p = sampleNearest(src, pos);
-		float n = 
-                SAMPLE_THRESHOLD(src, pos, minA, -1.0, -1.0) 
-				+ SAMPLE_THRESHOLD(src, pos, minA, -1.0, 0.0)
-				+ SAMPLE_THRESHOLD(src, pos, minA, 0.0, - 1.0)
-				+ SAMPLE_THRESHOLD(src, pos, minA, 1.0, -1.0) * maxX
-				+ SAMPLE_THRESHOLD(src, pos, minA, 1.0, 0.0) * maxX
-				+ SAMPLE_THRESHOLD(src, pos, minA, -1.0, 1.0) * maxY
-				+ SAMPLE_THRESHOLD(src, pos, minA, 0.0, 1.0) * maxY
-				+ SAMPLE_THRESHOLD(src, pos, minA, 1.0, 1.0) * maxX * maxY
-                ;
-		
+        int reds = 0;
+        int blues = 0;
+        int greens = 0;
+        int cyans = 0;
+        int magentas = 0;
+        int yellows = 0;
+        int whites = 0;
+        int majorColor = 0;
+        float4 color;
+        float4 neighbor;
+		float n = 0.0;
+        SAMPLE_NEAREST(-1.0,-1.0);
+        SAMPLE_NEAREST(-1.0, 0.0);
+        SAMPLE_NEAREST(-1.0, 1.0);
+        SAMPLE_NEAREST( 0.0,-1.0);
+        SAMPLE_NEAREST( 0.0, 1.0);
+        SAMPLE_NEAREST( 1.0,-1.0);
+        SAMPLE_NEAREST( 1.0, 0.0);
+        SAMPLE_NEAREST( 1.0, 1.0);
+        		
+        color = float4(1.0, 1.0, 1.0, 1.0);  // override major color
+        
 		if(n == 3.0) {
-            if (
-                p.a <= recentDecay
-            ) {
-                dst = float4(1.0);
+            if (p.a <= recentDecay) {
+                dst = float4(color[0], color[1], color[2], color[3]);
+                dst.a = 1.0;
             }
             else if (minA <= p.a) {
-                dst = float4(1.0);
+                dst = float4(color[0], color[1], color[2], color[3]);
                 dst.a = max(p.a - decay, 0.0);
             } else {
                 PERISH(dst);
             }
         }
 		else if(n == 2.0) {
-			dst = float4(p[0], p[1], p[2], p[3]);
+                dst = float4(p[0], p[1], p[2], p[3]);  // stasis
             if (minA <= p.a) {
                 dst.a = max(p.a - decay, 0.0);
             }
