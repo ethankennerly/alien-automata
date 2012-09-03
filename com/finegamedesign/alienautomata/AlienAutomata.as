@@ -7,6 +7,7 @@ package com.finegamedesign.alienautomata
     import flash.events.Event;
     import flash.events.KeyboardEvent;
     import flash.events.MouseEvent;
+	import flash.geom.Matrix;
     import flash.geom.Point;
     import flash.geom.Rectangle;
     import flash.text.TextField;
@@ -25,6 +26,7 @@ package com.finegamedesign.alienautomata
         [Embed (source="PlayerRight.png")]
         public static var Player:Class;
         public static var player:Bitmap = new Player();
+        public static var playerGhost:Bitmap = new PlayerBullet();
         [Embed (source="EnemyArmada.png")]
         public static var EnemyArmada:Class;
         public static var enemyArmada:Bitmap = new EnemyArmada();
@@ -66,7 +68,8 @@ package com.finegamedesign.alienautomata
             playerRight = true;
             shooting = false;
             started = false;
-            debug = false;
+            debug = true;
+            _matrix = new Matrix();
             armadaFrame = int.MAX_VALUE;
             universe = new Sprite();
             universe.scaleX = displayScale;
@@ -89,7 +92,10 @@ package com.finegamedesign.alienautomata
             tf.y = stage.stageHeight >> 1;
             tf.textColor = 0xFFFFFFFF;
             addChild(tf);
+            playerGhost.visible = debug;
+            universe.addChild(playerGhost);
             monitor = new FPSMonitor();
+            monitor.visible = debug;
             addChild(monitor);
         }
 
@@ -111,6 +117,7 @@ package com.finegamedesign.alienautomata
             updateState(life.bitmapData);
             if (debug != monitor.visible) {
                 monitor.visible = debug;
+                playerGhost.visible = debug;
             }
             if (armadaFrame <= frame) {
                 addArmada(life.bitmapData);
@@ -120,14 +127,16 @@ package com.finegamedesign.alienautomata
 
         private function updateState(state:BitmapData):void 
         {
-            var thrust:int = leftThrust + rightThrust;
-            var newX:int = Math.max(4, Math.min(player.x + thrust
-                                        + (playerRight ? 1 : -1), 
-                                        state.width - player.width - 4));
-            if (newX == player.x || ((0 == thrust) && frame % 60 == 59)) {
+            var velocityX:Number = 0.5 * Math.max(-1.0, Math.min(1.0, 
+                (leftThrust + rightThrust + (playerRight ? 1.0 : -1.0))));
+            var newX:Number = Math.max(4.0, Math.min(player.x + velocityX, 
+                                        state.width - player.width - 4.0));
+            if (newX == player.x || ((0 == velocityX) && frame % 60 == 59)) {
                 flipPlayer(state, player);
             }
             player.x = newX;
+            playerGhost.x = player.x;
+            playerGhost.y = player.y;
 
             if (shooting) {
                 if (shootFrame <= frame) {
@@ -191,17 +200,20 @@ package com.finegamedesign.alienautomata
             universe.addChild(player);
         }
 
-        
+		private var _matrix:Matrix;
         private function flipPlayer(state:BitmapData, player:Bitmap)
         {
-            player.x += player.scaleX * player.width;
-            player.scaleX *= -1;
             playerRight = !playerRight;
             player.bitmapData.lock();
             player.bitmapData.copyPixels(state, 
                 new Rectangle(player.x, player.y, player.width, player.height),
-                new Point(player.x, player.y),
-                null, null, true );
+                new Point(0, 0),
+                null, null, false);
+            _matrix.identity();
+            _matrix.translate(-player.width, 0);
+            _matrix.scale(-1, 1);
+            _matrix.translate(player.width, 0);
+            player.bitmapData.draw(player.bitmapData, _matrix);
             player.bitmapData.unlock();
             state.lock();
             state.copyPixels(player.bitmapData, 
