@@ -32,13 +32,14 @@ package com.finegamedesign.alienautomata
         public static var playerColor:uint = 0xAA00AAAA;
         private var clone:BitmapData;
         private var _matrix:Matrix = new Matrix();
-        private var playerRect:Rectangle;
         public static var playerGhost:Bitmap = new PlayerBullet();
         [Embed (source="EnemyArmada.png")]
         public static var EnemyArmada:Class;
         public static var enemyArmada:Bitmap = new EnemyArmada();
         public static var shootInterval:int = 30;
         public static var shootFrame:int;
+        public static var flipFrame:int;
+        public static var startFrame:int;
         public static var frame:int;
         public static var displayScale:int = 3;
         private var leftThrust:int;
@@ -71,6 +72,8 @@ package com.finegamedesign.alienautomata
                 removeChild(getChildAt(c));
             }
             shootFrame = 0;
+            flipFrame = 0;
+            startFrame = 0;
             frame = 0;
             leftThrust = 0;
             rightThrust = 0;
@@ -80,7 +83,6 @@ package com.finegamedesign.alienautomata
             debug = false;
             armadaFrame = int.MAX_VALUE;
             player = new Player();
-            playerRect = new Rectangle(0, 0, player.width, player.height);
             universe = new Sprite();
             universe.scaleX = displayScale;
             universe.scaleY = displayScale;
@@ -117,16 +119,16 @@ package com.finegamedesign.alienautomata
                 trace("start");
             }
             if (!started) {
-                stage.removeEventListener(Event.ENTER_FRAME, start);
+                stage.removeEventListener(MouseEvent.CLICK, start);
                 tf.visible = false;
-                armadaFrame = frame;
+                armadaFrame = frame + 30;
                 started = true;
+                startFrame = frame;
             }
         }
 
         public function update(e:Event):void 
         {
-            updateState(life.bitmapData);
             updateState(life.bitmapData);
             if (debug != monitor.visible) {
                 monitor.visible = debug;
@@ -145,10 +147,12 @@ package com.finegamedesign.alienautomata
             }
             else {
                 if (!tf.visible) {
-                    tf.text = "You survived " + frame + " generations!"
+                    tf.text = "You survived " + (frame - startFrame).toString() 
+                        + " generations!"
                         + "\n\nClick anywhere to start over.";
                     stage.addEventListener(MouseEvent.CLICK, init, false, 0, true);
                     tf.visible = true;
+                    armadaFrame = int.MAX_VALUE;
                 }
             }
             life.update();
@@ -159,12 +163,16 @@ package com.finegamedesign.alienautomata
         {
             var velocityX:Number = 0.5 * Math.max(-1.0, Math.min(1.0, 
                 (leftThrust + rightThrust + (playerRight ? 1.0 : -1.0))));
-            var newX:Number = Math.max(0, Math.min(player.x + velocityX, 
-                                        state.width - player.width));
-            if (newX == player.x || ((0 == velocityX) && frame % 60 == 59)) {
+            var newX:Number = Math.max(2, Math.min(player.x + velocityX, 
+                                        state.width - player.width - 2));
+            if (newX == player.x && flipFrame <= frame) {
+                player.x = newX;
                 flipPlayer(state, player);
+                flipFrame = frame + 12;
             }
-            player.x = newX;
+            else {
+                player.x = newX;
+            }
             playerGhost.x = player.x;
             playerGhost.y = player.y;
 
@@ -232,6 +240,7 @@ package com.finegamedesign.alienautomata
         {
             var clone:BitmapData = new BitmapData(player.width, player.height, 
                 true, 0x00000000);
+            var playerRect:Rectangle = new Rectangle(0, 0, player.width, player.height);
             var pixels:int = clone.threshold(bitmapData, 
                 playerRect, new Point(0, 0), ">=", 0x00007777, 0x0000FFFF, 0xFF00FFFF, true);
             if (! (1 <= pixels)) {
@@ -247,6 +256,7 @@ package com.finegamedesign.alienautomata
                 new Rectangle(player.x, player.y, player.width, player.height),
                 new Point(0, 0),
                 null, null, true);
+            var playerRect:Rectangle = new Rectangle(0, 0, player.width, player.height);
             var pixels:int = clone.threshold(clone, 
                 playerRect, new Point(0, 0), ">=", 0x00007777, 0x0000FFFF, 0xFF00FFFF, true);
             return 1 <= pixels;
@@ -258,28 +268,37 @@ package com.finegamedesign.alienautomata
          */
         private function flipPlayer(state:BitmapData, player:Bitmap)
         {
+            player.x += playerRight ? 0.5 : -0.5;
+            player.x = Math.round(player.x);
+            player.y = Math.round(player.y);
             playerRight = !playerRight;
-            var clone:BitmapData = new BitmapData(player.width, player.height, 
+            player.bitmapData.lock();
+            var px:int = player.x;
+            var py:int = player.y;
+            var pw:int = player.width;
+            var ph:int = player.height;
+            var playerRect:Rectangle = new Rectangle(0, 0, pw, ph);
+            var clone:BitmapData = new BitmapData(pw, ph, 
                 true, 0x00000000);
+            state.lock();
             clone.copyPixels(state, 
-                new Rectangle(player.x, player.y, player.width, player.height),
+                new Rectangle(px, py, pw, ph),
                 new Point(0, 0),
                 null, null, true);
             _matrix.identity();
-            _matrix.translate(-player.width / 2, -player.height / 2);
-            _matrix.rotate(Math.PI);
-            _matrix.translate(player.width / 2, player.height / 2);
-            player.bitmapData.lock();
+            _matrix.translate(-int(pw / 2), -int(ph / 2));
+            // _matrix.rotate(Math.PI);
+            _matrix.scale(-1, 1);
+            _matrix.translate(int(pw / 2), int(ph / 2));
             player.bitmapData.fillRect(playerRect, 0x00000000);
             player.bitmapData.draw(clone, _matrix);
-            player.bitmapData.unlock();
-            state.lock();
             state.fillRect(
-                new Rectangle(player.x, player.y, player.width, player.height),
+                new Rectangle(px, py, pw, ph),
                 0x00000000);
             state.copyPixels(player.bitmapData, playerRect,
-                new Point(player.x, player.y),
+                new Point(px, py),
                 null, null, true);
+            player.bitmapData.unlock();
             state.unlock();
         }
 
