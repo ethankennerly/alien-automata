@@ -29,8 +29,9 @@ package com.finegamedesign.alienautomata
         public static var enemyArmada:Bitmap = new EnemyArmada();
         public static var aliveMask:uint = 0xFF000000;
         public static var deadColor:uint = 0x00000000;
-        public static var shootInterval:int = 1000;
-        public static var shootTime:int;
+        public static var shootFrames:int = 30;
+        public static var shootFrame:int;
+        public static var frame:int;
         public static var displayScale:int = 2;
         public var leftThrust:int;
         public var rightThrust:int;
@@ -52,7 +53,8 @@ package com.finegamedesign.alienautomata
         public function init(event:Event) 
         {
             displayScale = 3;
-            shootTime = 0;
+            shootFrame = 0;
+            frame = 0;
             leftThrust = 0;
             rightThrust = 0;
             shooting = false;
@@ -102,13 +104,13 @@ package com.finegamedesign.alienautomata
             player.x = Math.max(1, Math.min(player.x + leftThrust + rightThrust, 
                                         state.width - playerBullet.width - 1));
             if (shooting) {
-                var now = getTimer();
-                if (shootTime <= now) {
+                if (shootFrame <= frame) {
                     playerShoot(state, playerBullet);
-                    shootTime = now + shootInterval;
+                    shootFrame = frame + shootFrames;
                 }
             }
             life.update();
+            frame ++;
         }
 
         private function onKeyDown(event:KeyboardEvent)

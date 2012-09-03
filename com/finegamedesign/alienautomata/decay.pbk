@@ -14,14 +14,6 @@ kernel Decay
     const float decay = (1.0 - minA) / 32.0;
     const float recentDecay = minA - (16.0 * decay);
     const float maxDecay = minA + (16.0 * decay);
-    /*const float4 white = float4(1.0, 1.0, 1.0, 1.0);
-    const float4 yellow = float4(1.0, 1.0, 0.0, 1.0);
-    const float4 magenta = float4(1.0, 0.0, 1.0, 1.0);
-    const float4 red = float4(1.0, 0.0, 0.0, 1.0);
-    const float4 cyan = float4(0.0, 1.0, 1.0, 1.0);
-    const float4 green = float4(0.0, 1.0, 0.0, 1.0);
-    const float4 blue = float4(0.0, 0.0, 1.0, 1.0);
-    */
     
 	parameter float width
 	<
@@ -55,12 +47,6 @@ kernel Decay
     #define SIMPLE_SAMPLE_NEAREST(dx,dy) \
             n += (minA <= sampleNearest(src, pos + float2(dx, dy)).a) ? 1.0 : 0.0
             
-    #define _SAMPLE_NEAREST(dx,dy) \
-            neighbor = sampleNearest(src, pos + float2(dx, dy)); \
-            if (minA <= neighbor.a) { \
-                n += 1.0; \
-            }
-
     #define SAMPLE_NEAREST(dx,dy) \
         if ((0.0 < dx + pos.x + 0.5 && pos.x + dx + 0.5 < width) \
          && (0.0 < dy + pos.y + 0.5 && pos.y + dy + 0.5 < height)) { \
@@ -70,7 +56,6 @@ kernel Decay
                 COUNT_COLOR(neighbor); \
             } \
         }
-                
 
     #define PERISH(dst) \
 			dst = float4(0.0); \
@@ -109,7 +94,7 @@ kernel Decay
         SAMPLE_NEAREST( 1.0, 0.0);
         SAMPLE_NEAREST( 1.0, 1.0);
         		
-        color = float4(1.0, 1.0, 1.0, 1.0);  // override major color
+        // color = float4(1.0, 1.0, 1.0, 1.0);  // override major color
         
 		if(n == 3.0) {
             if (p.a <= recentDecay) {
