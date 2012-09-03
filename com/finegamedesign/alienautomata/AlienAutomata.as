@@ -9,6 +9,7 @@ package com.finegamedesign.alienautomata
     import flash.events.MouseEvent;
     import flash.geom.Point;
     import flash.geom.Rectangle;
+    import flash.text.TextField;
     import flash.ui.Keyboard;
     import flash.utils.getTimer;
 
@@ -39,6 +40,7 @@ package com.finegamedesign.alienautomata
         public var started:Boolean;
         public var life:PBDecay;
         public var universe:Sprite;
+        public var tf:TextField;
         public var debug:Boolean;
         public var monitor:FPSMonitor;
 
@@ -76,12 +78,24 @@ package com.finegamedesign.alienautomata
             stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp, false, 0, true);
             stage.addEventListener(MouseEvent.CLICK, start, false, 0, true);
             stage.addEventListener(Event.ENTER_FRAME, update, false, 0, true);
-            var monitor:FPSMonitor = FPSMonitor());
+            tf = new TextField();
+            tf.text = "Press LEFT or RIGHT: Move\nPress SPACE: Shoot" 
+                + "\n\nClick anywhere to spawn:\nALIEN AUTOMATA";
+            tf.width = 200;
+            tf.height = 200;
+            tf.x = stage.stageWidth >> 2;
+            tf.y = stage.stageHeight >> 1;
+            tf.textColor = 0xFFFFFFFF;
+            addChild(tf);
+            monitor = new FPSMonitor();
             addChild(monitor);
         }
 
         public function start(event:Event)
         {
+            if (!started) {
+                tf.visible = false;
+            }
             if (debug) {
                 trace("start");
             }
@@ -102,7 +116,7 @@ package com.finegamedesign.alienautomata
         public function update(e:Event):void 
         {
             updateState(life.bitmapData);
-            // updateState(life.bitmapData);
+            updateState(life.bitmapData);
             if (debug != monitor.visible) {
                 monitor.visible = debug;
             }
