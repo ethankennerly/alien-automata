@@ -22,7 +22,7 @@ package com.finegamedesign.alienautomata
         [Embed (source="PlayerBullet3.png")]
         public static var PlayerBullet:Class;
         public static var playerBullet:Bitmap = new PlayerBullet();
-        [Embed (source="Player.png")]
+        [Embed (source="PlayerRight.png")]
         public static var Player:Class;
         public static var player:Bitmap = new Player();
         [Embed (source="EnemyArmada.png")]
@@ -30,15 +30,17 @@ package com.finegamedesign.alienautomata
         public static var enemyArmada:Bitmap = new EnemyArmada();
         public static var aliveMask:uint = 0xFF000000;
         public static var deadColor:uint = 0x00000000;
-        public static var shootFrames:int = 30;
+        public static var shootInterval:int = 30;
         public static var shootFrame:int;
         public static var frame:int;
-        public static var displayScale:int = 2;
+        public static var displayScale:int = 3;
         public var leftThrust:int;
         public var rightThrust:int;
         public var shooting:Boolean;
         public var started:Boolean;
         public var life:PBDecay;
+        public var armadaFrame:int;
+        public static var armadaInterval:int = 450;
         public var universe:Sprite;
         public var tf:TextField;
         public var debug:Boolean;
@@ -56,7 +58,6 @@ package com.finegamedesign.alienautomata
 
         public function init(event:Event) 
         {
-            displayScale = 3;
             shootFrame = 0;
             frame = 0;
             leftThrust = 0;
@@ -64,16 +65,15 @@ package com.finegamedesign.alienautomata
             shooting = false;
             started = false;
             debug = false;
+            armadaFrame = int.MAX_VALUE;
             universe = new Sprite();
             universe.scaleX = displayScale;
             universe.scaleY = displayScale;
             life = new PBDecay(stage.stageWidth / displayScale, 
                 stage.stageHeight / displayScale);
             universe.addChild(life.bitmap);
-            player.x = (life.bitmap.width - playerBullet.width >> 1);
-            player.y = (life.bitmap.height - player.height - 1);
-            universe.addChild(player);
             addChild(universe);
+            addPlayer(life.bitmapData, player);
             stage.addEventListener(KeyboardEvent.KEY_DOWN, onKeyDown, false, 0, true);
             stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp, false, 0, true);
             stage.addEventListener(MouseEvent.CLICK, start, false, 0, true);
@@ -93,14 +93,14 @@ package com.finegamedesign.alienautomata
 
         public function start(event:Event)
         {
-            if (!started) {
-                tf.visible = false;
-            }
             if (debug) {
                 trace("start");
             }
-            addArmada(life.bitmapData);
-            started = true;
+            if (!started) {
+                tf.visible = false;
+                armadaFrame = frame;
+                started = true;
+            }
         }
 
         public function addArmada(state:BitmapData)
@@ -120,6 +120,10 @@ package com.finegamedesign.alienautomata
             if (debug != monitor.visible) {
                 monitor.visible = debug;
             }
+            if (armadaFrame <= frame) {
+                addArmada(life.bitmapData);
+                armadaFrame = frame + armadaInterval;
+            }
         }
 
         private function updateState(state:BitmapData):void 
@@ -129,7 +133,7 @@ package com.finegamedesign.alienautomata
             if (shooting) {
                 if (shootFrame <= frame) {
                     playerShoot(state, playerBullet);
-                    shootFrame = frame + shootFrames;
+                    shootFrame = frame + shootInterval;
                 }
             }
             life.update();
@@ -165,13 +169,26 @@ package com.finegamedesign.alienautomata
             }
         }
 
+        private function addPlayer(state:BitmapData, player:Bitmap)
+        {
+            state.lock();
+            player.x = (life.bitmap.width - player.width >> 1);
+            player.y = (life.bitmap.height - player.height - 2);
+            state.copyPixels(player.bitmapData, 
+                new Rectangle(0, 0, player.width, player.height),
+                new Point(player.x, player.y),
+                null, null, true );
+            state.unlock();
+            universe.addChild(player);
+        }
+
         private function playerShoot(state:BitmapData, playerBullet:Bitmap)
         {
             state.lock();
             state.copyPixels(playerBullet.bitmapData, 
                 new Rectangle(0, 0, playerBullet.width, playerBullet.height),
                 new Point(((player.width - playerBullet.width) >> 1) + player.x, 
-                    player.y - playerBullet.height - 1),
+                    player.y - playerBullet.height - 4),
                 null, null, true );
             state.unlock();
         }
