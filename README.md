@@ -3,26 +3,28 @@ Alien Automata
 
 * Instructions
 
-Open bin/index.html
-Uses Flash Player 9 or higher
+Open index.html
+Uses Flash Player 10 or higher
 
 Shoot the aliens.
-Avoid their bullets and explosions.
+Avoid the explosions.
+How long can you survive?
 Based on Conway's Game of Life.
 
 * Controls
 
 o To move, press Left or Right
-o To fire, press Space, Z, X, or C.
+o To fire, press Space.
 
 * Webpage
 
 https://github.com/ethankennerly/alien-automata
 
-* Third Party libraries
+* Third Party Contents
 
-In sub-folders,
-this includes frame per second monitor and convolution filter to iterate Life.
+This includes frame per second monitor.
+Pixel Blender code is based on a shader demo of Game of Life.
+Enemies were copied from Golly demo of orthogonal spaceships in Conway's Game of Life.
 Contact those authors for their licenses.
 
 Comments
@@ -30,7 +32,7 @@ Comments
 
 If you have any comments, please mail me:  kennerly + finegamedesign - com
 
-A videogame made in 2 days.
+A videogame concept made in 2 days.
 September 1-2, 2012
 Version 0.1
 
@@ -44,11 +46,14 @@ This weekend I wanted to make another game, and sessions of Conway's Life monopo
 
 ActionScript 3
 Flash CS4
+Pixel Blender Toolkit 2
+Golly 2.4
+
 
 License
 -------
 
-Copyright 2012 Ethan Kennerly. All rights reserved. 
+Except third party content, Copyright 2012 Ethan Kennerly. All rights reserved. 
 
 Redistribution and use in source and binary forms, 
 with or without modification, are permitted provided that 
