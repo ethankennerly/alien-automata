@@ -1,10 +1,3 @@
-/*
-download .pbk and read more on:
-http://blog.yoz.sk/2010/03/game-of-life/
-
-Adapted to decay after 4 turns.
-*/
-
 package com.finegamedesign.alienautomata
 {
     import flash.display.Bitmap;
@@ -14,6 +7,11 @@ package com.finegamedesign.alienautomata
     
     /**
      * Minimal shader to update game of life.
+     * Conway's Game of Life to decay after some turns.
+     * Using PixelBender shader to update and display.
+     *
+     * Forked from Yoz's demo:
+     * http://blog.yoz.sk/2010/03/game-of-life/
      */
     public class PBDecay
     {

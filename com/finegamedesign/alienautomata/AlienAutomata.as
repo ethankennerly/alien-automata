@@ -18,7 +18,7 @@ package com.finegamedesign.alienautomata
     [SWF(width="483", height="480", frameRate="30", backgroundColor="#000000")]
     public class AlienAutomata extends Sprite
     {
-        [Embed (source="PlayerBulletWide.png")]
+        [Embed (source="PlayerBullet3.png")]
         public static var PlayerBullet:Class;
         public static var playerBullet:Bitmap = new PlayerBullet();
         [Embed (source="Player.png")]
@@ -39,6 +39,8 @@ package com.finegamedesign.alienautomata
         public var started:Boolean;
         public var life:PBDecay;
         public var universe:Sprite;
+        public var debug:Boolean;
+        public var monitor:FPSMonitor;
 
         public function AlienAutomata()
         {
@@ -59,6 +61,7 @@ package com.finegamedesign.alienautomata
             rightThrust = 0;
             shooting = false;
             started = false;
+            debug = false;
             universe = new Sprite();
             universe.scaleX = displayScale;
             universe.scaleY = displayScale;
@@ -73,12 +76,15 @@ package com.finegamedesign.alienautomata
             stage.addEventListener(KeyboardEvent.KEY_UP, onKeyUp, false, 0, true);
             stage.addEventListener(MouseEvent.CLICK, start, false, 0, true);
             stage.addEventListener(Event.ENTER_FRAME, update, false, 0, true);
-            addChild(new FPSMonitor());
+            var monitor:FPSMonitor = FPSMonitor());
+            addChild(monitor);
         }
 
         public function start(event:Event)
         {
-            trace("start");
+            if (debug) {
+                trace("start");
+            }
             addArmada(life.bitmapData);
             started = true;
         }
@@ -97,6 +103,9 @@ package com.finegamedesign.alienautomata
         {
             updateState(life.bitmapData);
             // updateState(life.bitmapData);
+            if (debug != monitor.visible) {
+                monitor.visible = debug;
+            }
         }
 
         private function updateState(state:BitmapData):void 
@@ -137,6 +146,9 @@ package com.finegamedesign.alienautomata
             if (Keyboard.RIGHT == event.keyCode) {
                 rightThrust = 0;
             }
+            if (Keyboard.ESCAPE == event.keyCode) {
+                debug = !debug;
+            }
         }
 
         private function playerShoot(state:BitmapData, playerBullet:Bitmap)
@@ -144,7 +156,8 @@ package com.finegamedesign.alienautomata
             state.lock();
             state.copyPixels(playerBullet.bitmapData, 
                 new Rectangle(0, 0, playerBullet.width, playerBullet.height),
-                new Point(player.x, player.y - playerBullet.height - 1),
+                new Point(((player.width - playerBullet.width) >> 1) + player.x, 
+                    player.y - playerBullet.height - 1),
                 null, null, true );
             state.unlock();
         }

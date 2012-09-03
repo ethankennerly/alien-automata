@@ -11,9 +11,12 @@ kernel Decay
 	input image4 src;
 	output pixel4 dst;
     const float minA = 0.5;
-    const float decay = (1.0 - minA) / 32.0;
-    const float recentDecay = minA - (8.0 * decay);
-    const float maxDecay = minA + (8.0 * decay);
+    const float decay = (1.0 - minA) / 16.0;
+    const float recentDecay = minA - (4.0 * decay);
+    const float maxDecay = minA + (4.0 * decay);
+    const float bulletDecay = (1.0 - minA) / 8.0;
+    const float bulletRecentDecay = minA - (4.0 * decay);
+    const float bulletMaxDecay = minA + (4.0 * decay);
     
 	parameter float width
 	<
@@ -44,9 +47,6 @@ kernel Decay
         else if (0.0 < c.g){INC_COLOR(greens, neighbor)} \
         else if (0.0 < c.b){INC_COLOR(blues, neighbor)}
         
-    #define SIMPLE_SAMPLE_NEAREST(dx,dy) \
-            n += (minA <= sampleNearest(src, pos + float2(dx, dy)).a) ? 1.0 : 0.0
-            
     #define SAMPLE_NEAREST(dx,dy) \
         if ((0.0 < dx + pos.x + 0.5 && pos.x + dx + 0.5 < width) \
          && (0.0 < dy + pos.y + 0.5 && pos.y + dy + 0.5 < height)) { \
@@ -94,26 +94,36 @@ kernel Decay
         SAMPLE_NEAREST( 1.0, 0.0);
         SAMPLE_NEAREST( 1.0, 1.0);
 
+        // Bullets decay faster
+        float thisDecay = decay;
+        float thisRecentDecay = recentDecay;
+        float thisMaxDecay = maxDecay;
+        if (1 <= majorColor && yellows == majorColor && minA <= p.a) {
+            thisDecay = bulletDecay;
+            thisRecentDecay = bulletRecentDecay;
+            thisMaxDecay = bulletMaxDecay;
+        }
+        
 		if(n == 3.0) {
-            if (p.a <= recentDecay) {
+            if (p.a <= thisRecentDecay) {
                 dst = float4(color[0], color[1], color[2], color[3]);
                 dst.a = 1.0;
             }
             else if (minA <= p.a) {
                 dst = float4(color[0], color[1], color[2], color[3]);
-                dst.a = max(p.a - recentDecay, 0.0);
+                dst.a = max(p.a - thisDecay, 0.0);
             } else {
-                PERISH(dst, decay, maxDecay);
+                PERISH(dst, thisDecay, thisMaxDecay);
             }
         }
 		else if(n == 2.0) {
             dst = float4(p[0], p[1], p[2], p[3]);  // stasis
             if (minA <= p.a) {
-                dst.a = max(p.a - decay, 0.0);
+                dst.a = max(p.a - thisDecay, 0.0);
             }
         }
 		else {
-            PERISH(dst, decay, maxDecay);
+            PERISH(dst, thisDecay, thisMaxDecay);
         }
 	}
 }
