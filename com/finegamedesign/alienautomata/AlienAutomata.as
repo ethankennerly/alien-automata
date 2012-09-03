@@ -16,7 +16,7 @@ package com.finegamedesign.alienautomata
     import com.finegamedesign.alienautomata.PBDecay;
     import it.flashfuck.debugger.FPSMonitor;
 
-    [SWF(width="483", height="480", frameRate="30", backgroundColor="#000000")]
+    [SWF(width="483", height="480", frameRate="30", backgroundColor="#111144")]
     public class AlienAutomata extends Sprite
     {
         [Embed (source="PlayerBullet3.png")]
@@ -34,8 +34,9 @@ package com.finegamedesign.alienautomata
         public static var shootFrame:int;
         public static var frame:int;
         public static var displayScale:int = 3;
-        public var leftThrust:int;
-        public var rightThrust:int;
+        private var leftThrust:int;
+        private var rightThrust:int;
+        private var playerRight:Boolean;
         public var shooting:Boolean;
         public var started:Boolean;
         public var life:PBDecay;
@@ -62,6 +63,7 @@ package com.finegamedesign.alienautomata
             frame = 0;
             leftThrust = 0;
             rightThrust = 0;
+            playerRight = true;
             shooting = false;
             started = false;
             debug = false;
@@ -103,16 +105,6 @@ package com.finegamedesign.alienautomata
             }
         }
 
-        public function addArmada(state:BitmapData)
-        {
-            state.lock();
-            state.copyPixels(enemyArmada.bitmapData, 
-                new Rectangle(0, 0, enemyArmada.width, enemyArmada.height),
-                new Point((state.width - enemyArmada.width) >> 1, 1),
-                null, null, true );
-            state.unlock();
-        }
-
         public function update(e:Event):void 
         {
             updateState(life.bitmapData);
@@ -128,8 +120,15 @@ package com.finegamedesign.alienautomata
 
         private function updateState(state:BitmapData):void 
         {
-            player.x = Math.max(1, Math.min(player.x + leftThrust + rightThrust, 
-                                        state.width - playerBullet.width - 1));
+            var thrust:int = leftThrust + rightThrust;
+            var newX:int = Math.max(4, Math.min(player.x + thrust
+                                        + (playerRight ? 1 : -1), 
+                                        state.width - player.width - 4));
+            if (newX == player.x || ((0 == thrust) && frame % 60 == 59)) {
+                flipPlayer(state, player);
+            }
+            player.x = newX;
+
             if (shooting) {
                 if (shootFrame <= frame) {
                     playerShoot(state, playerBullet);
@@ -169,6 +168,16 @@ package com.finegamedesign.alienautomata
             }
         }
 
+        public function addArmada(state:BitmapData)
+        {
+            state.lock();
+            state.copyPixels(enemyArmada.bitmapData, 
+                new Rectangle(0, 0, enemyArmada.width, enemyArmada.height),
+                new Point((state.width - enemyArmada.width) >> 1, 1),
+                null, null, true );
+            state.unlock();
+        }
+
         private function addPlayer(state:BitmapData, player:Bitmap)
         {
             state.lock();
@@ -180,6 +189,26 @@ package com.finegamedesign.alienautomata
                 null, null, true );
             state.unlock();
             universe.addChild(player);
+        }
+
+        
+        private function flipPlayer(state:BitmapData, player:Bitmap)
+        {
+            player.x += player.scaleX * player.width;
+            player.scaleX *= -1;
+            playerRight = !playerRight;
+            player.bitmapData.lock();
+            player.bitmapData.copyPixels(state, 
+                new Rectangle(player.x, player.y, player.width, player.height),
+                new Point(player.x, player.y),
+                null, null, true );
+            player.bitmapData.unlock();
+            state.lock();
+            state.copyPixels(player.bitmapData, 
+                new Rectangle(0, 0, player.width, player.height),
+                new Point(player.x, player.y),
+                null, null, true );
+            state.unlock();
         }
 
         private function playerShoot(state:BitmapData, playerBullet:Bitmap)
