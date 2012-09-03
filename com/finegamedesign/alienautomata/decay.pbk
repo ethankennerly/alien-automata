@@ -12,8 +12,8 @@ kernel Decay
 	output pixel4 dst;
     const float minA = 0.5;
     const float decay = (1.0 - minA) / 32.0;
-    const float recentDecay = minA - (16.0 * decay);
-    const float maxDecay = minA + (16.0 * decay);
+    const float recentDecay = minA - (8.0 * decay);
+    const float maxDecay = minA + (8.0 * decay);
     
 	parameter float width
 	<
@@ -57,7 +57,7 @@ kernel Decay
             } \
         }
 
-    #define PERISH(dst) \
+    #define PERISH(dst, decay, maxDecay) \
 			dst = float4(0.0); \
             if (minA <= p.a) { \
                 if (p.a < maxDecay) { \
@@ -93,9 +93,7 @@ kernel Decay
         SAMPLE_NEAREST( 1.0,-1.0);
         SAMPLE_NEAREST( 1.0, 0.0);
         SAMPLE_NEAREST( 1.0, 1.0);
-        		
-        // color = float4(1.0, 1.0, 1.0, 1.0);  // override major color
-        
+
 		if(n == 3.0) {
             if (p.a <= recentDecay) {
                 dst = float4(color[0], color[1], color[2], color[3]);
@@ -103,19 +101,19 @@ kernel Decay
             }
             else if (minA <= p.a) {
                 dst = float4(color[0], color[1], color[2], color[3]);
-                dst.a = max(p.a - decay, 0.0);
+                dst.a = max(p.a - recentDecay, 0.0);
             } else {
-                PERISH(dst);
+                PERISH(dst, decay, maxDecay);
             }
         }
 		else if(n == 2.0) {
-                dst = float4(p[0], p[1], p[2], p[3]);  // stasis
+            dst = float4(p[0], p[1], p[2], p[3]);  // stasis
             if (minA <= p.a) {
                 dst.a = max(p.a - decay, 0.0);
             }
         }
 		else {
-            PERISH(dst);
+            PERISH(dst, decay, maxDecay);
         }
 	}
 }

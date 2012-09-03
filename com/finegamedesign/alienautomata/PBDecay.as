@@ -37,7 +37,11 @@ package com.finegamedesign.alienautomata
         
         public function update():void
         {
+            bitmapData.lock();
+            bitmap.visible = false;
             new ShaderJob(shader, bitmapData, 4, 4).start(true);
+            bitmap.visible = true;
+            bitmapData.unlock();
         }
     }
 }
