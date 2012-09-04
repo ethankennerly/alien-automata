@@ -16,6 +16,7 @@ package com.finegamedesign.alienautomata
 
     import com.finegamedesign.alienautomata.PBDecay;
     import it.flashfuck.debugger.FPSMonitor;
+    import org.flixel.plugin.photonstorm.API.FlxKongregate;
 
     /**
      * Ethan Kennerly
@@ -65,9 +66,17 @@ package com.finegamedesign.alienautomata
             }
         }
 
+        private function apiHasLoaded():void
+        {
+            FlxKongregate.connect();
+        }
+
         public function init(event:Event) 
         {
             stage.removeEventListener(Event.ADDED_TO_STAGE, init);
+            if (null == FlxKongregate.api) {
+                FlxKongregate.init(stage, apiHasLoaded);
+            }
             for (var c:int = numChildren - 1; 0 <= c; c--) {
                 removeChild(getChildAt(c));
             }
@@ -147,12 +156,14 @@ package com.finegamedesign.alienautomata
             }
             else {
                 if (!tf.visible) {
-                    tf.text = "You survived " + (frame - startFrame).toString() 
+                    var score:int = frame - startFrame;
+                    tf.text = "You survived " + score.toString() 
                         + " generations!"
                         + "\n\nClick anywhere to start over.";
                     stage.addEventListener(MouseEvent.CLICK, init, false, 0, true);
                     tf.visible = true;
                     armadaFrame = int.MAX_VALUE;
+                    FlxKongregate.submitStats("Score", score);
                 }
             }
             life.update();

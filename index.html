@@ -329,7 +329,7 @@ Open index.html
 Uses Flash Player 10 or higher
 
 Shoot the aliens.
-Avoid their bullets and explosions.
+Avoid the explosions.
 Based on Conway's Game of Life.
 
 * Controls
@@ -365,6 +365,26 @@ We brainstormed ideas, including mixing Conway's Game of Life with Space Invader
 We expected it would be too chaotic.
 This weekend I wanted to make another game, and sessions of Conway's Life monopolized my imagination.
 
+On Decay of a Pixel
+-------------------
+
+I refined rules for decay and coloring. 
+
+Conway's Life cluttered the screen with flotsam 
+that explodes colliding bullets and aliens, which I found frustrating. 
+So over the course of a dozen generations (half a second), 
+a stable pixel decays and a decayed pixel may not be revived for a half dozen generations (a quarter second). 
+The transparency indicates a decaying pixel. 
+Decay was hard to balance such that large aliens and the player also did not die of decay. 
+Consequently, nothing may remain still, not even the player. 
+The player's ship also follows the same rules, 
+except that the arrow keys and edges flips the pixels where there ought to be a ship. 
+And there is a rule for voting on the color of each pixel according to its neighbors, 
+which multiplies computations. 
+
+Altogether, the number of computations on 160x160 pixels 
+exceeds ActionScript's ability to render at 30 frames per second. 
+So the cellular automata are purely graphical, computed in the pixel shader.
 </font>
 </pre>
 <p />
