@@ -27,6 +27,7 @@ Pixel Blender code is based on a shader demo of Game of Life.
 Enemies were copied from Golly demo of orthogonal spaceships in Conway's Game of Life.
 Contact those authors for their licenses.
 
+
 Comments
 --------
 
